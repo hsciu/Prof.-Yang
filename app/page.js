@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -8,6 +8,7 @@ import "katex/dist/katex.min.css";
 import styles from "./page.module.css";
 
 export default function Home() {
+  const fileInputRef = useRef(null);
   const [preview, setPreview] = useState(null);
   const [imageData, setImageData] = useState(null);
   const [mimeType, setMimeType] = useState(null);
@@ -62,37 +63,57 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <h1>數學／力學家教</h1>
-        <p>上傳一張題目圖片，AI會給你詳細的解題過程。</p>
+        <div className={styles.header}>
+          <h1>數學／力學家教</h1>
+          <p>上傳一張題目圖片，AI會給你詳細的解題過程</p>
+        </div>
 
-        <input type="file" accept="image/*" onChange={handleFileChange} />
+        <div className={styles.card}>
+          <label
+            className={styles.uploadZone}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <span className={styles.uploadIcon}>📷</span>
+            <p>
+              <strong>點擊上傳</strong>題目照片
+            </p>
+            <input
+              ref={fileInputRef}
+              className={styles.fileInput}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+            />
+          </label>
 
-        {preview && (
-          <img
-            src={preview}
-            alt="題目預覽"
-            style={{ maxWidth: "100%", marginTop: "1rem" }}
-          />
-        )}
+          {preview && (
+            <div className={styles.previewWrap}>
+              <img src={preview} alt="題目預覽" className={styles.preview} />
+            </div>
+          )}
 
-        <button
-          onClick={handleSubmit}
-          disabled={loading || !imageData}
-          style={{ marginTop: "1rem" }}
-        >
-          {loading ? "解題中..." : "開始解題"}
-        </button>
+          <button
+            className={styles.submitButton}
+            onClick={handleSubmit}
+            disabled={loading || !imageData}
+          >
+            {loading && <span className={styles.spinner} />}
+            {loading ? "解題中..." : "開始解題"}
+          </button>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+          {error && <div className={styles.errorBox}>{error}</div>}
+        </div>
 
         {result && (
-          <div style={{ marginTop: "2rem", textAlign: "left" }}>
-            <ReactMarkdown
-              remarkPlugins={[remarkMath]}
-              rehypePlugins={[rehypeKatex]}
-            >
-              {result}
-            </ReactMarkdown>
+          <div className={styles.card}>
+            <div className={styles.resultCard}>
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+              >
+                {result}
+              </ReactMarkdown>
+            </div>
           </div>
         )}
       </main>
