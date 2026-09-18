@@ -13,10 +13,10 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+          background: "#2b2b2b",
           color: "white",
           fontSize: 100,
-          fontWeight: 700,
+          fontWeight: 600,
         }}
       >
         ∫
