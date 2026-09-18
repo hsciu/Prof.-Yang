@@ -25,7 +25,7 @@ export async function POST(request) {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const response = await ai.models.generateContent({
+    const request_params = {
       model: "gemini-3.6-flash",
       contents: [
         {
@@ -40,14 +40,34 @@ export async function POST(request) {
         systemInstruction: SYSTEM_INSTRUCTION,
         temperature: 0.2,
       },
-    });
+    };
 
-    return Response.json({ result: response.text });
+    const maxAttempts = 3;
+    let lastErr;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const response = await ai.models.generateContent(request_params);
+        return Response.json({ result: response.text });
+      } catch (err) {
+        lastErr = err;
+        const isOverloaded =
+          err.status === 503 || /UNAVAILABLE|overloaded|high demand/i.test(err.message || "");
+        if (!isOverloaded || attempt === maxAttempts) break;
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+      }
+    }
+    throw lastErr;
   } catch (err) {
     console.error(err);
+    const isOverloaded =
+      err.status === 503 || /UNAVAILABLE|overloaded|high demand/i.test(err.message || "");
     return Response.json(
-      { error: err.message || "發生未知錯誤" },
-      { status: 500 }
+      {
+        error: isOverloaded
+          ? "Gemini伺服器目前忙碌中，已自動重試多次仍失敗，請稍後再試一次。"
+          : err.message || "發生未知錯誤",
+      },
+      { status: isOverloaded ? 503 : 500 }
     );
   }
 }
