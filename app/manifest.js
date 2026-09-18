@@ -1,7 +1,7 @@
 export default function manifest() {
   return {
-    name: "數學／力學家教",
-    short_name: "數學家教",
+    name: "Prof. Yang",
+    short_name: "Prof. Yang",
     description: "上傳題目圖片，取得AI詳細解題過程",
     start_url: "/",
     display: "standalone",

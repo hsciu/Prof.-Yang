@@ -12,12 +12,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "數學／力學家教",
+  title: "Prof. Yang",
   description: "上傳題目圖片，取得AI詳細解題過程",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "數學家教",
+    title: "Prof. Yang",
   },
 };
 

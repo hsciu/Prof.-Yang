@@ -1,0 +1,112 @@
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  border-right: 1px solid #dcdcdc;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2b2b2b;
+  margin-bottom: 8px;
+}
+
+.collapseButton,
+.expandButton {
+  border: 1px solid #dcdcdc;
+  background: #ffffff;
+  color: #2b2b2b;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.collapseButton {
+  width: 24px;
+  height: 24px;
+}
+
+.expandButton {
+  height: 40px;
+  padding: 0 12px;
+  align-self: flex-start;
+  margin-bottom: 16px;
+}
+
+.hint {
+  font-size: 13px;
+  color: #767676;
+}
+
+.categoryGroup {
+  font-size: 13px;
+}
+
+.categoryGroup summary {
+  cursor: pointer;
+  padding: 6px 0;
+  font-weight: 600;
+  color: #2b2b2b;
+  list-style: none;
+}
+
+.categoryGroup summary::-webkit-details-marker {
+  display: none;
+}
+
+.categoryGroup summary::before {
+  content: "▸ ";
+  font-size: 11px;
+}
+
+.categoryGroup[open] summary::before {
+  content: "▾ ";
+}
+
+.itemList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 12px;
+}
+
+.historyItem {
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  color: #767676;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.historyItem:hover {
+  background: #f2f2f2;
+  color: #2b2b2b;
+}
+
+.historyItemActive {
+  background: #2b2b2b;
+  color: #ffffff;
+}
+
+.historyItemActive:hover {
+  background: #2b2b2b;
+  color: #ffffff;
+}
+
+@media (max-width: 800px) {
+  .sidebar {
+    width: 200px;
+  }
+}
