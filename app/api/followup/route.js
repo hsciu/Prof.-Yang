@@ -3,7 +3,7 @@ import { getClient, generateWithRetry, isOverloadedError } from "@/lib/gemini";
 
 function buildContents({ messages, mimeType, fileData }) {
   return messages.map((msg, idx) => {
-    if (idx === 0) {
+    if (idx === 0 && mimeType && fileData) {
       return {
         role: "user",
         parts: [
@@ -20,7 +20,7 @@ export async function POST(request) {
   try {
     const { mode, mimeType, fileData, messages, message } = await request.json();
 
-    if (!mimeType || !fileData || !Array.isArray(messages) || !message) {
+    if (!Array.isArray(messages) || !message) {
       return Response.json({ error: "缺少必要參數" }, { status: 400 });
     }
 

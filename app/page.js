@@ -32,8 +32,10 @@ export default function Home() {
   const [fileName, setFileName] = useState(null);
   const [fileData, setFileData] = useState(null);
   const [mimeType, setMimeType] = useState(null);
+  const [problemText, setProblemText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState(null);
 
   const [history, setHistory] = useState([]);
   const [activeRecord, setActiveRecord] = useState(null);
@@ -49,6 +51,31 @@ export default function Home() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 2000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  useEffect(() => {
+    function handlePaste(e) {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            processFile(file);
+          }
+          break;
+        }
+      }
+    }
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, []);
+
   function persistHistory(next) {
     setHistory(next);
     try {
@@ -58,10 +85,7 @@ export default function Home() {
     }
   }
 
-  function handleFileChange(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  function processFile(file) {
     const isImage = file.type.startsWith("image/");
     const isPdf = file.type === "application/pdf";
     if (!isImage && !isPdf) {
@@ -70,8 +94,9 @@ export default function Home() {
     }
 
     setError("");
+    setProblemText("");
     setMimeType(file.type);
-    setFileName(file.name);
+    setFileName(file.name || "剪貼簿圖片.png");
     setImagePreview(null);
 
     const reader = new FileReader();
@@ -85,9 +110,34 @@ export default function Home() {
     reader.readAsDataURL(file);
   }
 
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+  }
+
+  function handleProblemTextChange(e) {
+    const value = e.target.value;
+    setProblemText(value);
+    if (value.trim()) {
+      setFileData(null);
+      setImagePreview(null);
+      setFileName(null);
+      setMimeType(null);
+    }
+  }
+
+  function clearUploadState() {
+    setImagePreview(null);
+    setFileName(null);
+    setFileData(null);
+    setMimeType(null);
+    setProblemText("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   async function handleSubmit() {
-    if (!fileData) {
-      setError("請先上傳題目圖片或PDF");
+    if (!fileData && !problemText.trim()) {
+      setError("請上傳題目圖片／PDF，或輸入題目文字");
       return;
     }
     setLoading(true);
@@ -98,7 +148,11 @@ export default function Home() {
       const res = await fetch("/api/solve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ file: fileData, mimeType, mode }),
+        body: JSON.stringify(
+          fileData
+            ? { file: fileData, mimeType, mode }
+            : { text: problemText.trim(), mode }
+        ),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -110,10 +164,10 @@ export default function Home() {
         category: data.category,
         title: data.title,
         mode,
-        mimeType,
-        fileData,
+        mimeType: fileData ? mimeType : null,
+        fileData: fileData || null,
         messages: [
-          { role: "user", text: "" },
+          { role: "user", text: data.initialPrompt },
           { role: "model", text: data.content },
         ],
         createdAt: new Date().toISOString(),
@@ -121,6 +175,8 @@ export default function Home() {
 
       persistHistory([record, ...history]);
       setActiveRecord(record);
+      clearUploadState();
+      setToast("解題完成");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -171,6 +227,7 @@ export default function Home() {
       setActiveRecord(updatedRecord);
       persistHistory(history.map((item) => (item.id === updatedRecord.id ? updatedRecord : item)));
       setFollowupText("");
+      setToast("回覆已更新");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -180,13 +237,15 @@ export default function Home() {
 
   return (
     <div className={styles.layout}>
+      {toast && <div className={styles.toast}>{toast}</div>}
+
       <Sidebar items={history} activeId={activeRecord?.id} onSelect={handleSelectHistory} />
 
       <div className={styles.page}>
         <main className={styles.main}>
           <div className={styles.header}>
             <h1>Prof. Yang</h1>
-            <p>上傳題目圖片或PDF，選擇你需要的回覆方式</p>
+            <p>上傳題目圖片／PDF，或直接貼上圖片、輸入文字</p>
           </div>
 
           <div className={styles.card}>
@@ -211,7 +270,7 @@ export default function Home() {
             >
               <span className={styles.uploadIcon}>📄</span>
               <p>
-                <strong>點擊上傳</strong>題目圖片或PDF
+                <strong>點擊上傳</strong>或直接貼上（Ctrl+V）題目圖片
               </p>
               <input
                 ref={fileInputRef}
@@ -235,10 +294,19 @@ export default function Home() {
               </div>
             )}
 
+            <div className={styles.divider}>或</div>
+
+            <textarea
+              className={styles.textInput}
+              placeholder="直接輸入或貼上題目文字"
+              value={problemText}
+              onChange={handleProblemTextChange}
+            />
+
             <button
               className={styles.submitButton}
               onClick={handleSubmit}
-              disabled={loading || !fileData}
+              disabled={loading || (!fileData && !problemText.trim())}
             >
               {loading && <span className={styles.spinner} />}
               {loading ? "處理中..." : "送出"}
